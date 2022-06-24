@@ -75,15 +75,15 @@ public class WeatherInfo {
     }
 
     // sending weather info to user
-    @Override
-    public String toString() {
-        String msgTime, msgCity, msgWeather, message;
-        msgTime = "Погода на " + getTime();
-        msgCity = "Город: " + getCity().getCityName();
-        msgWeather = String.format("Температура: %d°C. %s.", getTemperature(), getCurrentWeather());
-        message = msgTime + "\n" + msgCity + "\n" + msgWeather;
-        return message;
-
-    }
+//    @Override
+//    public String toString() {
+//        String msgTime, msgCity, msgWeather, message;
+//        msgTime = "Погода на " + getTime();
+//        msgCity = "Город: " + getCity().getCityName();
+//        msgWeather = String.format("Температура: %d°C. %s.", getTemperature(), getCurrentWeather());
+//        message = msgTime + "\n" + msgCity + "\n" + msgWeather;
+//        return message;
+//
+//    }
 
 }
