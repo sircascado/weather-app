@@ -1,84 +1,80 @@
 package com.cascado.server;
 
+import com.cascado.client.Window;
 import com.cascado.server.error.GettingCityException;
 import com.cascado.client.Panel;
+
+import java.awt.*;
 import java.io.*;
 import java.net.URL;
-import java.nio.charset.Charset;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import org.json.JSONException;
-import org.json.JSONObject;
-import java.io.*;
 import java.net.*;
-import java.nio.charset.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import org.json.*;
 import static com.cascado.common.MessageConstants.REGEX;
 
 public class WeatherInfo {
 
-//    private OWM owm;
     private final static String API_KEY = "19ba505622c747712dd5f351a3351e78";
     private static WeatherInfo weatherInfo = new WeatherInfo();
     private String weather;
     private String time;
     private String temperature;
     private String city;
-    private Panel panel = new Panel();
-    private String url =
-            "http://api.openweathermap.org/geo/1.0/direct?q=Stupino&limit=5&appid=19ba505622c747712dd5f351a3351e78";
-
-    private String url2 =
-            "http://api.openweathermap.org/geo/1.0/direct?q=Stupino,Moscow Oblast&limit=5&appid=19ba505622c747712dd5f351a3351e78";
-
-    public static void main(String[] args) throws IOException {
-        // Connect to the URL using java's native library
-        URL url = new URL(weatherInfo.url);
-        URLConnection request = url.openConnection();
-        BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
-        StringBuilder sb = new StringBuilder();
-
-        String inputLine;
-        while ((inputLine = br.readLine()) != null) {
-            sb.append(inputLine);
-        }
-        br.close();
-        JSONArray json = new JSONArray(sb.toString());
-
-        ArrayList<String> list = new ArrayList<String>();
-        JSONArray jsonArray = (JSONArray)json;
-        if (jsonArray != null) {
-            int len = jsonArray.length();
-            for (int i = 0; i < len; i++){
-                list.add(jsonArray.get(i).toString());
-            }
-        }
-
-        System.out.println(list);
-
-    }
-
-    // configure owm: api key, lang, accuracy, etc
-//    private OWM config(){
-//        owm = new OWM(API_KEY);
-//        owm.setUnit(OWM.Unit.METRIC);
-//
-////        if (Application.askLang().equals("ru")) owm.setLanguage(OWM.Language.RUSSIAN);
-////        else owm.setLanguage(OWM.Language.ENGLISH);
-//        owm.setLanguage(OWM.Language.RUSSIAN);
-//
-//        owm.setAccuracy(OWM.Accuracy.ACCURATE);
-//        return owm;
-//    }
 
     // sending city name to owm api
-    public String setCity(){
-        return panel.sendCityName();
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    private String makeUrl(String city, String apiKey) {
+        String url =
+                String.format(("http://api.openweathermap.org/geo/1.0/direct?q=%s&limit=5&appid=%s"), city, apiKey);
+        return url;
+    }
+
+    // connecting to api with url
+    private StringBuilder connectApi() {
+        try {
+            URL url = new URL(makeUrl(getCity(), API_KEY));
+            URLConnection request = url.openConnection();
+            BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+
+            String inputLine;
+            while ((inputLine = br.readLine()) != null) {
+                sb.append(inputLine);
+            }
+            br.close();
+            return sb;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private ArrayList<String> apiAnswerToArray() {
+        JSONArray json = new JSONArray(connectApi().toString());
+        ArrayList<String> list = new ArrayList<String>();
+        JSONArray jsonArray = (JSONArray) json;
+        if (jsonArray != null) {
+            int len = jsonArray.length();
+            for (int i = 0; i < len; i++) {
+                list.add(jsonArray.get(i).toString());
+            }
+            return list;
+        }
+        return null;
+    }
+
+    public void makingArrayFromJSONArray(){
+        makeUrl(city, API_KEY);
+        connectApi();
+        System.out.println(apiAnswerToArray());
     }
 
 //     getting weather by city name
@@ -128,10 +124,6 @@ public class WeatherInfo {
 
     public String getTime() {
         return time;
-    }
-
-    public String getCity() {
-        return city;
     }
 
     public String getTemperature() {
