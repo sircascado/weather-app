@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+import com.cascado.common.MessageConstants;
 import com.cascado.server.WeatherInfo;
 import static com.cascado.common.MessageConstants.REGEX;
 
@@ -16,8 +16,7 @@ public class Panel extends JPanel {
     private JLabel resultCity;
     private JLabel resultTemperature;
     private JLabel resultWeather;
-    private String[] receivedData = new String[3];
-    private String city;
+    private WeatherInfo weatherInfo = new WeatherInfo();
 
     public Panel(){
         doInterface();
@@ -33,11 +32,40 @@ public class Panel extends JPanel {
         enterCityButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                WeatherInfo weatherInfo = new WeatherInfo();
-                weatherInfo.setCity(getCity());
-                weatherInfo.makingArrayFromJSONArray();
+                    if (error() == MessageConstants.ERROR_STATUS_OK) {
+                        clearLabels();
+                        weatherInfo.setCity(getCity());
+                        weatherInfo.sendWeatherInfo();
+                        varsFromArrayToLabels();
+                        enterCityField.setText("");
+                    }
             }
         });
+    }
+
+    private void clearLabels(){
+        resultCity.setText("City: ");
+        resultWeather.setText("Weather: ");
+        resultTemperature.setText("Temperature: ");
+    }
+
+    private void varsFromArrayToLabels(){
+        String[] receivedData = weatherInfo.parseJSON().split(REGEX);
+        resultCity.setText(resultCity.getText() + receivedData[0]);
+        resultTemperature.setText(resultTemperature.getText() + receivedData[1]);
+        resultWeather.setText(resultWeather.getText() + receivedData[2]);
+    }
+
+    public int error() {
+        if (getCity().equals("") || getCity().equals(" ")) {
+            this.showError(MessageConstants.INVALID_CITY);
+            return MessageConstants.ERROR_STATUS_BAD;
+        }
+        return MessageConstants.ERROR_STATUS_OK;
+    }
+
+    public void showError(String reason){
+            JOptionPane.showMessageDialog(this, reason);
     }
 
     private void addComponentsToPanel() {

@@ -1,46 +1,34 @@
 package com.cascado.server;
 
-import com.cascado.client.Window;
-import com.cascado.server.error.GettingCityException;
-import com.cascado.client.Panel;
-
-import java.awt.*;
 import java.io.*;
 import java.net.URL;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+
+import com.cascado.client.Panel;
+import com.cascado.common.MessageConstants;
 import org.json.*;
 import static com.cascado.common.MessageConstants.REGEX;
 
 public class WeatherInfo {
 
     private final static String API_KEY = "19ba505622c747712dd5f351a3351e78";
-    private static WeatherInfo weatherInfo = new WeatherInfo();
-    private String weather;
-    private String time;
-    private String temperature;
     private String city;
 
-    // sending city name to owm api
+    // setting city name from TextField to OWM API
     public void setCity(String city) {
         this.city = city;
     }
 
-    public String getCity() {
-        return city;
-    }
-
-    private String makeUrl(String city, String apiKey) {
-        String url =
-                String.format(("http://api.openweathermap.org/geo/1.0/direct?q=%s&limit=5&appid=%s"), city, apiKey);
-        return url;
+    private String makeUrl(String city) {
+        return String.format(("https://api.openweathermap.org/data/2.5/weather?q=%s&units=metric&lang=en&appid=%s"),
+                        city, WeatherInfo.API_KEY);
     }
 
     // connecting to api with url
-    private StringBuilder connectApi() {
+    private StringBuilder connectToApi() {
+        Panel panel = new Panel();
         try {
-            URL url = new URL(makeUrl(getCity(), API_KEY));
+            URL url = new URL(makeUrl(getCity()));
             URLConnection request = url.openConnection();
             BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
             StringBuilder sb = new StringBuilder();
@@ -51,82 +39,47 @@ public class WeatherInfo {
             }
             br.close();
             return sb;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            panel.showError(MessageConstants.CITY_IS_NOT_FOUND);
+        } catch (IOException e){
+            panel.showError(MessageConstants.INVALID_CITY);
         }
         return null;
     }
 
-    private ArrayList<String> apiAnswerToArray() {
-        JSONArray json = new JSONArray(connectApi().toString());
-        ArrayList<String> list = new ArrayList<String>();
-        JSONArray jsonArray = (JSONArray) json;
-        if (jsonArray != null) {
-            int len = jsonArray.length();
-            for (int i = 0; i < len; i++) {
-                list.add(jsonArray.get(i).toString());
-            }
-            return list;
+    private JSONObject jsonObject(){
+        String jsonString = connectToApi().toString();
+        JSONObject jsonObject = new JSONObject(jsonString);
+        return jsonObject;
+    }
+
+    public String parseJSON(){
+        return parseCity() + REGEX + parseTemperature() + REGEX + parseWeather();
+    }
+
+    private String parseWeather(){
+        JSONArray weatherArr = jsonObject().getJSONArray("weather");
+        for (int i = 0; i < weatherArr.length(); i++) {
+            return weatherArr.getJSONObject(i).getString("main");
         }
         return null;
     }
 
-    public void makingArrayFromJSONArray(){
-        makeUrl(city, API_KEY);
-        connectApi();
-        System.out.println(apiAnswerToArray());
+    private int parseTemperature(){
+        return (int) (jsonObject().getJSONObject("main").getFloat("temp"));
     }
 
-//     getting weather by city name
-//    private CurrentWeather inputCity() {
-//        try {
-//            return config().currentWeatherByCityName(setCity());
-//        } catch (APIException e){
-//            if (setCity().equals("") || setCity().equals(" ")) {
-//                throw new GettingCityException("Input the city.");
-//            } else {
-//                throw new GettingCityException("City is not found.");
-//            }
-//        }
-//    }
-
-//     getting temperature
-//    private void setTemperature() {
-//        temperature = ((int)Math.round(inputCity().getMainData().getTemp())) + "";
-//    }
-
-//     getting time
-//    private void setTime() {
-//        int hours, minutes, seconds;
-//        hours = inputCity().getDateTime().getHours();
-//        minutes = inputCity().getDateTime().getMinutes();
-//        seconds = inputCity().getDateTime().getSeconds();
-//        time = String.format("%d:%d:%d.", hours, minutes, seconds);
-//    }
-
-//    public String toSend(){
-//        setCurrentWeather();
-//        setTemperature();
-//        setTime();
-//        return time + REGEX + setCity() + REGEX + temperature + REGEX + currentWeather;
-//    }
-
-//     getting current weather
-//    private void setCurrentWeather() {
-//        currentWeather = inputCity().getWeatherList().get(0).getMoreInfo();
-//        // return weather with capitalized first letter
-//        currentWeather = currentWeather.substring(0, 1).toUpperCase() + currentWeather.substring(1);
-//    }
-
-    public String getWeather() {
-        return weather;
+    private String parseCity(){
+        return jsonObject().getString("name");
     }
 
-    public String getTime() {
-        return time;
+    public void sendWeatherInfo(){
+        makeUrl(city);
+        connectToApi();
+        jsonObject();
     }
 
-    public String getTemperature() {
-        return temperature;
+    public String getCity() {
+        return city;
     }
 }
