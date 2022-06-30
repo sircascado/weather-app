@@ -1,3 +1,3 @@
-#Weather App in Java.
+**Weather App in Java.**
 
 Java 17, Swing
